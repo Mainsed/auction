@@ -10,9 +10,9 @@ import {
     InputLabel,
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
-import {NavLink} from 'react-router-dom';
 import Lot from './Lot'
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {useHttp} from "../../hooks/httpHook";
 
 const style = theme => ({
     paper: {
@@ -54,6 +54,59 @@ const style = theme => ({
 })
 
 const FindLot = props => {
+    const [time, setTime] = useState({
+        rerenderTime: false
+    })
+    const [filter, setFilter] = useState({
+        filters: {
+            timeLeft: -1,
+            category: -1,
+            instantLow: '',
+            instantHigh: '',
+            lastBetLow: '',
+            lastBetHigh: '',
+            search: ''
+        }
+    })
+    const {loading, request} = useHttp();
+    const lots = props.lots ? Object.entries(props.lots) : null;
+
+    const timerSet = () => {
+        const timer = setTimeout(() => {
+            setTime({rerenderTime: !time.rerenderTime})
+        }, 1000);
+    }
+
+    const handleChange = (event) => {
+        const {filters} = filter;
+        filters[event.target.name] = event.target.value;
+        setFilter({filters});
+    }
+    const handleTextChange = async (event) => {
+        const {filters} = filter;
+        filters[event.target.name] = event.target.value;
+        setFilter({filters});
+        await updateLots();
+    }
+
+    const updateLots = async () => {
+        try {
+            await request('/api/lot/findall', 'POST', {...filter}).then((resp) => {
+                props.setLots(resp.lots);
+            })
+        } catch (e) {
+        }
+    }
+
+    const submitFilters = async () => {
+        await updateLots();
+    }
+
+    useEffect(async () => {
+        await updateLots();
+        timerSet();
+    }, [request])
+
     const {classes} = props;
     return (
         <Grid container>
@@ -69,15 +122,18 @@ const FindLot = props => {
                             </Typography>
                             <FormControl className={classes.formControl}>
                                 <InputLabel style={{color: 'white'}}>Категорія</InputLabel>
-                                <Select className={classes.select}>
-                                    <MenuItem value={0}>Всі</MenuItem>
-                                    <MenuItem value={1}>1</MenuItem>
-                                    <MenuItem value={2}>2</MenuItem>
-                                    <MenuItem value={3}>3</MenuItem>
-                                    <MenuItem value={4}>4</MenuItem>
+                                <Select className={classes.select} value={filter.filters.category}
+                                        onChange={handleChange}
+                                        name={'category'}>
+                                    <MenuItem value={-1}>Всі</MenuItem>
+                                    <MenuItem value={0}>Колекціонні предмети</MenuItem>
+                                    <MenuItem value={1}>Комп'ютерна техніка</MenuItem>
+                                    <MenuItem value={2}>Побутова техніка</MenuItem>
+                                    <MenuItem value={3}>Одяг/Взуття</MenuItem>
+                                    <MenuItem value={4}>Інше</MenuItem>
                                 </Select>
                             </FormControl>
-                            <Grid alignItems={"center"} className={classes.filterElement}>
+                            <Grid className={classes.filterElement}>
                                 <Typography variant={"h6"} align={"center"}>Ціна миттєвої покупки</Typography>
                                 <Typography align={"center"} style={{lineHeight: '2em'}}>
                                     Від
@@ -85,26 +141,33 @@ const FindLot = props => {
                                                style={{maxWidth: '35%', margin: '0px 5px'}}
                                                inputProps={{style: {padding: '10px'}}}
                                                className={classes.textField}
+                                               onChange={handleChange}
+                                               name={'instantLow'}
                                     />
                                     До
                                     <TextField variant={"outlined"}
                                                style={{maxWidth: '35%', margin: '0px 5px'}}
                                                inputProps={{style: {padding: '10px'}}}
                                                className={classes.textField}
+                                               onChange={handleChange}
+                                               name={'instantHigh'}
                                     />
                                 </Typography>
                             </Grid>
                             <FormControl className={classes.formControl}>
                                 <InputLabel style={{color: 'white'}}>Залишилось часу</InputLabel>
-                                <Select className={classes.select}>
-                                    <MenuItem value={0}>Всі</MenuItem>
-                                    <MenuItem value={1}>1</MenuItem>
-                                    <MenuItem value={2}>2</MenuItem>
-                                    <MenuItem value={3}>3</MenuItem>
-                                    <MenuItem value={4}>4</MenuItem>
+                                <Select className={classes.select} value={filter.filters.timeLeft}
+                                        onChange={handleChange}
+                                        name={'timeLeft'}>
+                                    <MenuItem value={-1}>Всі</MenuItem>
+                                    <MenuItem value={1}>Менше години</MenuItem>
+                                    <MenuItem value={2}>Менше дня</MenuItem>
+                                    <MenuItem value={3}>Менше 3 днів</MenuItem>
+                                    <MenuItem value={4}>Більше дня</MenuItem>
+                                    <MenuItem value={5}>Більше 3 днів</MenuItem>
                                 </Select>
                             </FormControl>
-                            <Grid alignItems={"center"} className={classes.filterElement}>
+                            <Grid className={classes.filterElement}>
                                 <Typography variant={"h6"} align={"center"}>Сума останньої ставки</Typography>
                                 <Typography align={"center"} style={{lineHeight: '2em'}}>
                                     Від
@@ -112,18 +175,23 @@ const FindLot = props => {
                                                style={{maxWidth: '35%', margin: '0px 5px'}}
                                                inputProps={{style: {padding: '10px'}}}
                                                className={classes.textField}
+                                               onChange={handleChange}
+                                               name={'lastBetLow'}
                                     />
                                     До
                                     <TextField variant={"outlined"}
                                                style={{maxWidth: '35%', margin: '0px 5px'}}
                                                inputProps={{style: {padding: '10px'}}}
                                                className={classes.textField}
+                                               onChange={handleChange}
+                                               name={'lastBetHigh'}
                                     />
                                 </Typography>
                             </Grid>
                             <Grid container justify={"center"}>
                                 <Button className={classes.confirmButton}
                                         variant={"contained"}
+                                        onClick={submitFilters}
                                 >
                                     Підтвердити
                                 </Button>
@@ -135,24 +203,19 @@ const FindLot = props => {
                             <TextField fullWidth
                                        variant={"outlined"}
                                        inputProps={{style: {padding: '10px'}}}
-                                       placeholder={'Пошук'}
+                                       placeholder={'Введіть назву лоту'}
                                        className={classes.textField}
+                                       onChange={handleTextChange}
+                                       name={'search'}
                             />
                             <Grid container>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
-                                <Lot/>
+                                {lots ? lots.map((lot) => {
+                                    return <Lot name={lot[1].name}
+                                                lastBet={lot[1].lastBet}
+                                                date={lot[1].date}
+                                                id={lot[1]._id}
+                                    />
+                                }) : ''}
                             </Grid>
                         </Paper>
                     </Grid>

@@ -3,10 +3,9 @@ import {
     Grid, Typography,
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
-import {NavLink} from 'react-router-dom';
-import React from "react";
-import Button from "@material-ui/core/Button";
+import React, {useEffect, useState} from "react";
 import MyWinsWin from "../MyWins/MyWinsWin";
+import {useHttp} from "../../../hooks/httpHook";
 
 const style = theme => ({
     paper: {
@@ -34,6 +33,20 @@ const style = theme => ({
 
 const MyWins = props => {
     const {classes} = props;
+    const {loading, request, error} = useHttp();
+    const [lots, setLots] = useState({lots: []})
+
+    useEffect(() => {
+        try {
+            request('/api/user/finduserwins', 'POST', {
+                _id: props.id
+            }).then((resp) => {
+                setLots({lots: resp.lots});
+            })
+        } catch (e) {
+        }
+    }, [])
+
     return (
         <Grid container>
             <Grid item xs={12}>
@@ -43,11 +56,9 @@ const MyWins = props => {
                     </Typography>
                     <Grid container justify={'center'}>
                         <Grid item xs={12} sm={10} lg={8}>
-                            <MyWinsWin/>
-                            <MyWinsWin/>
-                            <MyWinsWin/>
-                            <MyWinsWin/>
-                            <MyWinsWin/>
+                            {lots.lots.map((lot)=>{
+                                return <MyWinsWin name={lot.name} lastBet={lot.lastBet}/>
+                            })}
                         </Grid>
                     </Grid>
                 </Paper>

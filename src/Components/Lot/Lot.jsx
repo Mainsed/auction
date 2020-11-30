@@ -7,7 +7,9 @@ import {
     Typography
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {NavLink} from 'react-router-dom';
+import {useHttp} from "../../hooks/httpHook";
 
 const style = theme => ({
     paper: {
@@ -70,6 +72,68 @@ const style = theme => ({
 })
 
 const Lot = props => {
+
+    const [lot, setLot] = useState([])
+    const [text, setText] = useState({
+        field: {
+            bet: '',
+        },
+        errors: {
+            error: ''
+        },
+    })
+
+
+    const {loading, request, error} = useHttp();
+    useEffect(async () => {
+        request('/api/lot/find', 'POST', {id: props.match.params.id}).then((resp) => {
+            setLot({...resp._doc})
+        })
+    }, [text]);
+
+    const closeLot = () => {
+        request('/api/lot/updateBet', 'POST', {
+            id: props.match.params.id,
+            uId: props.uId,
+            bet: lot.instantPrice
+        })
+        request('/api/lot/updateStatus', 'POST', {id: props.match.params.id, uId: props.uId})
+    }
+    const bet = () => {
+        if (parseInt(text.field.bet) <= lot.lastBet) {
+            const {errors} = text;
+            errors['error'] = 'Ставка має бути вище останньої';
+            setText({...text, errors});
+            return;
+        }
+        debugger;
+        if (!parseInt(text.field.bet) > 0) {
+            const {errors} = text;
+            errors['error'] = 'Впишіть ставку, більшу за останню';
+            setText({...text, errors});
+            return;
+        }
+        request('/api/lot/updateBet', 'POST', {
+            id: props.match.params.id,
+            uId: props.uId,
+            bet: text.field.bet
+        }).then((resp => {
+            const {errors} = text;
+            errors['error'] = '';
+            setText({...text, errors});
+        }))
+        const {field} = text;
+        field['bet'] = '';
+        setText({...text, field});
+    }
+
+    const handleChange = (event) => {
+        const {field} = text;
+        const bet = event.target.value;
+        field['bet'] = bet;
+        setText({...text, field});
+    }
+
     const {classes} = props;
     const src = 'https://api.time.com/wp-content/uploads/2015/04/512137691.jpg?w=800&quality=85'
     return (
@@ -80,7 +144,7 @@ const Lot = props => {
                         <Grid item xs={12} lg={6} className={classes.halfPage}>
                             <Grid container justify={"space-evenly"}>
                                 <Grid item xs={8}>
-                                    <img src={src} alt="photo" className={classes.mainPhoto}></img>
+                                    <img src={src} alt="photo" className={classes.mainPhoto}/>
                                 </Grid>
                                 <Grid item xs={3}>
                                     <Grid container>
@@ -88,59 +152,81 @@ const Lot = props => {
                                             <img src={src} alt="photo" className={classes.secPhoto}/>
                                         </div>
                                         <div className={classes.secPhotoDiv}>
-                                            <img src={src} alt="photo" className={classes.secPhoto}
+                                            <img src={src} className={classes.secPhoto}
                                                  style={{opacity: '0.7'}}/>
                                             <p className={classes.photoText}>Інші фото</p>
                                         </div>
                                     </Grid>
                                 </Grid>
                             </Grid>
-                            <Grid container direction={"column"}>
+                            {lot.isClosed ?
                                 <Typography align={"center"} variant={'h6'} className={classes.element}>
-                                    Миттєва покупа: 2300₴
+                                    {`Лот вже продано`}
                                 </Typography>
-                                <div className={classes.element}>
-                                    <Button variant={"contained"} className={classes.buttons}>
-                                        Купити
-                                    </Button>
-                                </div>
-                                <Typography align={"center"} variant={'h6'} className={classes.element}>
-                                    Остання ставка: 1234₴
-                                </Typography>
-                                <TextField variant={"outlined"}
-                                           fullWidth
-                                           inputProps={{style: {padding: '10px', color: 'white'}}}
-                                           placeholder='Ваша ставка'
-                                />
-                                <div className={classes.element}>
-                                    <Button variant={"contained"} className={classes.buttons}>
-                                        Зробити ставку
-                                    </Button>
-                                </div>
-                            </Grid>
+                                :
+                                <Grid container direction={"column"}>
+                                    <Typography align={"center"} variant={'h6'} className={classes.element}>
+                                        {`Миттєва покупа: ${lot.instantPrice}`}
+                                    </Typography>
+                                    <div className={classes.element}>
+                                        {props.uId ?
+                                            <Button variant={"contained"} className={classes.buttons}
+                                                    onClick={closeLot}>
+                                                Купити
+                                            </Button> :
+                                            <Typography align={"center"} variant={'h6'} className={classes.element}>
+                                                Для покупки - <NavLink to={'/login'}>авторизуйтесь</NavLink>
+                                            </Typography>
+                                        }
+                                    </div>
+                                    {lot.lastBetOwner === props.uId ?
+                                        <Typography align={"center"} variant={'h6'} className={classes.element}>
+                                            {`Ваша ставка - остання`}
+                                        </Typography>
+                                        :
+                                        <div>
+                                            <Typography align={"center"} variant={'h6'} className={classes.element}>
+                                                {`Остання ставка: ${lot.lastBet}`}
+                                            </Typography>
+                                            <TextField variant={"outlined"}
+                                                       fullWidth
+                                                       onChange={handleChange}
+                                                       value={text.field.bet}
+                                                       inputProps={{style: {padding: '10px', color: 'white'}}}
+                                                       placeholder='Ваша ставка'
+                                            />
+                                            <Grid container justify={"center"} className={classes.element}>
+                                                {props.uId ?
+                                                    <Button variant={"contained"} className={classes.buttons}
+                                                            onClick={bet}>
+                                                        Зробити ставку
+                                                    </Button> :
+                                                    <Typography align={"center"} variant={'h6'}
+                                                                className={classes.element}>
+                                                        Для ставки - <NavLink to={'/login'}>авторизуйтесь</NavLink>
+                                                    </Typography>}
+                                            </Grid>
+                                            <Typography align={"center"} color={"error"} variant={'h6'}
+                                                        className={classes.element}>
+                                                {text.errors.error}
+                                            </Typography>
+                                        </div>
+                                    }
+                                </Grid>}
                         </Grid>
                         <Grid item className={classes.divider}>
                             <Divider orientation={"vertical"}/>
                         </Grid>
                         <Grid item xs={12} lg={5} className={classes.halfPage}>
                             <Typography align={"center"} variant={'h6'}>
-                                Назва
+                                {lot.name}
                             </Typography>
                             <Paper className={classes.addPaper} elevation={1}>
                                 <Typography align={"center"} variant={'h5'}>
                                     Опис
                                 </Typography>
                                 <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Критерій1
-                                </Typography>
-                                <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Критерій2
-                                </Typography>
-                                <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Критерій3
-                                </Typography>
-                                <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Критерій4
+                                    {lot.lotInfo}
                                 </Typography>
                             </Paper>
                             <Paper className={classes.addPaper} elevation={1}>
@@ -148,19 +234,7 @@ const Lot = props => {
                                     Коментарі продавця
                                 </Typography>
                                 <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Коментар1
-                                </Typography>
-                                <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Коментар2
-                                </Typography>
-                                <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Коментар3
-                                </Typography>
-                                <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Коментар4
-                                </Typography>
-                                <Typography align={"left"} variant={'h6'} className={classes.element}>
-                                    Коментар5
+                                    {lot.sellerComment}
                                 </Typography>
                             </Paper>
                         </Grid>

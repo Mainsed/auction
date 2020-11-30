@@ -56,7 +56,7 @@ class MyLotsLot extends React.Component {
                                 <img src={src} alt="Photo" className={classes.photo}/>
                                 <Grid item xs={7}>
                                     <Typography align={"center"}>
-                                        Назва лоту
+                                        {this.props.name}
                                     </Typography>
                                 </Grid>
                             </Grid>
@@ -67,7 +67,7 @@ class MyLotsLot extends React.Component {
                                     Ціна
                                 </Typography>
                                 <Typography align={"center"} className={classes.lotText}>
-                                    2345₴
+                                    {`${this.props.lastBet}₴`}
                                 </Typography>
                             </Grid>
                         </Grid>

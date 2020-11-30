@@ -4,7 +4,8 @@ import {
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
 import {NavLink} from 'react-router-dom';
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {useHttp} from "../../../hooks/httpHook";
 
 let elev = 5;
 
@@ -14,7 +15,7 @@ const style = theme => ({
         marginBottom: '20px',
         background: '#30ab97',
         transition: 'all .5s',
-        '&:hover':{
+        '&:hover': {
             transform: 'scale(1.2)',
         }
     },
@@ -26,66 +27,93 @@ const style = theme => ({
     }
 })
 
-class MyLotsLot extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {elev}
+const MyLotsLot = (props) => {
+
+    const [state, setState] = useState({
+        elev: 5,
+        lastBetOwner: '',
+        didBet: false
+    })
+
+    const onMouseOver = () => {
+        setState({...state, elev: 15})
+    }
+    const onMouseOut = () => {
+        setState({...state, elev: 5})
     }
 
-    onMouseOver = () => {
-        this.setState({elev: 15})
-    }
-    onMouseOut = () => {
-        this.setState({elev: 5})
-    }
+    const {loading, request, error} = useHttp();
 
-    render() {
-        const {classes} = this.props;
-        const {elev} = this.state;
-        const src = 'https://drscdn.500px.org/photo/159533631/m%3D900/v2?sig=7cf1ba4b1c724c55a76368f89392390956904df02907170602d704c8a38403a8'
-        return (
-            <NavLink to={'/lot/:1'} style={{textDecoration: 'none'}}>
-                <Paper className={classes.lotPaper}
-                       elevation={elev}
-                       onMouseOver={this.onMouseOver}
-                       onMouseOut={this.onMouseOut}
-                >
-                    <Grid container justify={"space-between"}>
-                        <Grid item xs={4}>
-                            <Grid container alignItems={"center"} justify={"space-between"} style={{height: '100%'}}>
-                                <img src={src} alt="Photo" className={classes.photo}/>
-                                <Grid item xs={7}>
-                                    <Typography align={"center"}>
-                                        Назва лоту
-                                    </Typography>
-                                </Grid>
+    useEffect(() => {
+        if (props.lastBetOwner !== '') {
+            try {
+                request('/api/user/getuserdata', 'POST', {
+                    userId: props.lastBetOwner
+                }).then((resp) => {
+                    debugger;
+                    setState({...state, lastBetOwner: resp.user.nickname, didBet: true})
+                })
+            } catch (e) {
+            }
+        }
+    }, [request])
+
+    const {classes} = props;
+    const {elev} = state;
+    const src = 'https://drscdn.500px.org/photo/159533631/m%3D900/v2?sig=7cf1ba4b1c724c55a76368f89392390956904df02907170602d704c8a38403a8'
+    return (
+        <NavLink to={'/lot/:1'} style={{textDecoration: 'none'}}>
+            <Paper className={classes.lotPaper}
+                   elevation={elev}
+                   onMouseOver={onMouseOver}
+                   onMouseOut={onMouseOut}
+            >
+                <Grid container justify={"space-between"}>
+                    <Grid item xs={4}>
+                        <Grid container alignItems={"center"} justify={"space-between"} style={{height: '100%'}}>
+                            <img src={src} alt="Photo" className={classes.photo}/>
+                            <Grid item xs={7}>
+                                <Typography align={"center"}>
+                                    {props.name}
+                                </Typography>
                             </Grid>
                         </Grid>
+                    </Grid>
+                    {state.didBet ?
                         <Grid item xs={4}>
                             <Grid container alignItems={"center"} style={{height: '100%'}}>
                                 <Typography align={"center"} className={classes.lotText}>
                                     Остання ставка
                                 </Typography>
                                 <Typography align={"center"} className={classes.lotText}>
-                                    2345₴
+                                    {`${props.lastBet}₴`}
                                 </Typography>
                             </Grid>
-                        </Grid>
+                        </Grid> : ''}
+                    {state.didBet ?
                         <Grid item xs={4}>
                             <Grid container alignItems={"center"} style={{height: '100%'}}>
                                 <Typography align={"center"} className={classes.lotText}>
-                                    Часу залишилось
+                                    Власник останньої ставки
                                 </Typography>
                                 <Typography align={"center"} className={classes.lotText}>
-                                    14:55:23
+                                    {state.lastBetOwner}
                                 </Typography>
                             </Grid>
                         </Grid>
-                    </Grid>
-                </Paper>
-            </NavLink>
-        )
-    }
+                        :
+                        <Grid item>
+                            <Grid container style={{height: '100%'}} alignItems={"center"} alignContent={"center"}>
+                                <Typography align={"center"} className={classes.lotText}>
+                                    Не було зроблено жодної ставки
+                                </Typography>
+                            </Grid>
+                        </Grid>
+                    }
+                </Grid>
+            </Paper>
+        </NavLink>
+    )
 }
 
 

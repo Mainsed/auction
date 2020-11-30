@@ -1,13 +1,17 @@
 import {combineReducers, createStore} from "redux";
 import createLotReducer from "./createLotReducer";
-import findLotsReducer from "./findLotsReducer";
-import logInReducer from "./logInReducer";
+import lotsReducer from "./lotsReducer";
 import lotPageReducer from "./lotPageReducer";
 import profileReducer from "./profileReducer";
+import headerReducer from "./headerReducer";
 
 
 let reducers = combineReducers({
-    createLotReducer, findLotsReducer, logInReducer, lotPageReducer, profileReducer
+    createLot: createLotReducer,
+    lots: lotsReducer,
+    lot: lotPageReducer,
+    profile: profileReducer,
+    header: headerReducer
 })
 
 const store = createStore(reducers);

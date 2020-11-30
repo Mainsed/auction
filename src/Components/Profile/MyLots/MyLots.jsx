@@ -4,9 +4,11 @@ import {
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
 import {NavLink} from 'react-router-dom';
-import React from "react";
+import React, {useEffect, useState} from "react";
 import Button from "@material-ui/core/Button";
 import MyLotsLot from "./MyLotsLot";
+import {useHttp} from "../../../hooks/httpHook";
+import {setUser} from "../../../Redux/profileReducer";
 
 const style = theme => ({
     paper: {
@@ -23,7 +25,21 @@ const style = theme => ({
 
 const MyLots = props => {
     const {classes} = props;
-    const src = 'https://drscdn.500px.org/photo/159533631/m%3D900/v2?sig=7cf1ba4b1c724c55a76368f89392390956904df02907170602d704c8a38403a8'
+    const {loading, request, error} = useHttp();
+
+    const [lots, setLots] = useState({lots: []})
+
+    useEffect(() => {
+        try {
+            request('/api/user/finduserlots', 'POST', {
+                _id: props.id
+            }).then((resp) => {
+                setLots({lots: resp.lots});
+            })
+        } catch (e) {
+        }
+    }, [])
+
     return (
         <Grid container>
             <Grid item xs={12}>
@@ -33,11 +49,11 @@ const MyLots = props => {
                     </Typography>
                     <Grid container justify={'center'}>
                         <Grid item xs={12} sm={10} lg={8}>
-                            <MyLotsLot/>
-                            <MyLotsLot/>
-                            <MyLotsLot/>
-                            <MyLotsLot/>
-                            <MyLotsLot/>
+                            {lots.lots.map((lot) => {
+                                return <MyLotsLot name={lot.name} lastBet={lot.lastBet}
+                                                  lastBetOwner={lot.lastBetOwner}
+                                />
+                            })}
                         </Grid>
                     </Grid>
                 </Paper>

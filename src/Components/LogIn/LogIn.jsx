@@ -1,13 +1,14 @@
 import {
     Paper,
     Grid,
-    TextField,
     Typography,
     Button
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
 import {NavLink} from 'react-router-dom';
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {useHttp} from "../../hooks/httpHook";
+import {ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
 
 const style = theme => ({
     paper: {
@@ -31,8 +32,36 @@ const style = theme => ({
 
 const LogIn = props => {
     const {classes} = props;
+
+    const [form, setForm] = useState({
+        validation: {
+            password: '',
+            nickname: '',
+        }
+    })
+
+    const handleChange = (event) => {
+        const {validation} = form;
+        validation[event.target.name] = event.target.value;
+        setForm({validation});
+    }
+
+    const {loading, request, error} = useHttp();
+
+    const load = async () => {
+        try {
+            await request('/api/auth/login', 'POST', {...form.validation}).then((resp)=>{
+                debugger;
+                props.setUser(resp._doc)
+            })
+        } catch (e) {
+        }
+    }
+
+    useEffect(() => {}, [error])
+
     return (
-        <Grid container>
+        <ValidatorForm onSubmit={load}>
             <Grid item xs={12}>
                 <Paper elevation={5} className={classes.paper}>
                     <Typography align={"center"}
@@ -45,30 +74,43 @@ const LogIn = props => {
 
                         <Grid item xs={12} sm={8} lg={7}>
                             <Typography align={"center"}>Nickname</Typography>
-                            <TextField variant={"outlined"}
-                                       fullWidth
-                                       inputProps={{style: {padding: '10px', color: 'white'}}}
-                                       className={classes.textField}
-                                       placeholder='Enter your nickname'
+                            <TextValidator variant={"outlined"}
+                                           fullWidth
+                                           inputProps={{style: {padding: '10px', color: 'white'}}}
+                                           className={classes.textField}
+                                           placeholder='Enter your nickname'
+                                           value={form.validation.nickname}
+                                           name={'nickname'}
+                                           onChange={handleChange}
+                                           validators={['minStringLength:2', 'required']}
+                                           errorMessages={['Введіть мінімум 2 символи', 'Це поле обов\'язкове для заповнення']}
                             />
                         </Grid>
                         <Grid item xs={12} sm={8} lg={7}>
                             <Typography align={"center"}>Password</Typography>
-                            <TextField variant={"outlined"}
-                                       fullWidth
-                                       inputProps={{
-                                           style: {padding: '10px', color: 'white'},
-                                           type: 'password'
-                                       }}
-                                       className={classes.textField}
-                                       placeholder='Enter your password'
+                            <TextValidator variant={"outlined"}
+                                           fullWidth
+                                           inputProps={{
+                                               style: {padding: '10px', color: 'white'},
+                                               type: 'password'
+                                           }}
+                                           className={classes.textField}
+                                           placeholder='Enter your password'
+                                           value={form.validation.password}
+                                           name={'password'}
+                                           onChange={handleChange}
+                                           validators={['minStringLength:6', 'required']}
+                                           errorMessages={['Введіть мінімум 6 символів', 'Це поле обов\'язкове для заповнення']}
                             />
                         </Grid>
                     </Grid>
+                    <Typography align={"center"} color={"error"}>{error || ''}</Typography>
                     <Grid container justify={"center"} alignItems={"center"}>
                         <Grid item>
                             <Button className={classes.confirmButton}
                                     variant={"contained"}
+                                    type={"submit"}
+                                    disabled={loading}
                             >
                                 LogIn
                             </Button>
@@ -86,7 +128,7 @@ const LogIn = props => {
                     </Grid>
                 </Paper>
             </Grid>
-        </Grid>
+        </ValidatorForm>
     )
 }
 

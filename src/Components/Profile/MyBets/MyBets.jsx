@@ -3,9 +3,7 @@ import {
     Grid, Typography,
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
-import {NavLink} from 'react-router-dom';
 import React from "react";
-import Button from "@material-ui/core/Button";
 import MyBetsBet from "../MyBets/MyBetsBet";
 
 const style = theme => ({
@@ -43,12 +41,9 @@ const MyBets = props => {
                     </Typography>
                     <Grid container justify={'center'}>
                         <Grid item xs={12} sm={10} lg={8}>
-                            <MyBetsBet red={true} mybet={1200}/>
-                            <MyBetsBet mybet={2345}/>
-                            <MyBetsBet mybet={2345}/>
-                            <MyBetsBet red={true} mybet={1200}/>
-                            <MyBetsBet mybet={2345}/>
-                            <MyBetsBet mybet={2345}/>
+                            {props.betList.map((id)=> {
+                                return <MyBetsBet userId={props.id} lotId={id}/>
+                            })}
                         </Grid>
                     </Grid>
                 </Paper>

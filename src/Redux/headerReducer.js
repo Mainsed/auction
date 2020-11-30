@@ -10,5 +10,5 @@ const headerReducer = (state = initialState, action) => {
     }
 }
 
-
 export default headerReducer;
+

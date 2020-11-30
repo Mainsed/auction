@@ -1,22 +1,26 @@
 import React from "react";
-import Header from "./Components/Header/Header"
+import HeaderContainer from "./Containers/HeaderContainer"
 import {Grid} from '@material-ui/core';
-import RouterController from "./RouterController"
+import RouterControllerContainer from "./Containers/RouterControllerContainer"
 import Footer from "./Components/Footer"
 import {BrowserRouter} from "react-router-dom";
+import {Provider} from "react-redux";
+import store from './Redux/store'
 
 function App() {
     return (
         <div>
-            <BrowserRouter>
-                <Grid container justify={"center"}>
-                    <Grid item xs={12} lg={10} xl={8}>
-                        <Header/>
-                        <RouterController/>
-                        <Footer/>
+            <Provider store={store}>
+                <BrowserRouter>
+                    <Grid container justify={"center"}>
+                        <Grid item xs={12} lg={10} xl={8}>
+                            <HeaderContainer/>
+                            <RouterControllerContainer/>
+                            <Footer/>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </BrowserRouter>
+                </BrowserRouter>
+            </Provider>
         </div>
     );
 }

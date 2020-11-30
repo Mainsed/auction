@@ -4,7 +4,7 @@ import {
 } from '@material-ui/core';
 import {withStyles} from "@material-ui/core";
 import {NavLink} from 'react-router-dom';
-import React from "react";
+import React, {useEffect} from "react";
 import Button from "@material-ui/core/Button";
 
 const style = theme => ({
@@ -42,9 +42,15 @@ const Header = props => {
                                 <img src={src} alt="logo" style={{maxWidth: '100%'}}/>
                             </NavLink>
                         </Grid>
-                        <NavLink to='/login' style={{textDecoration: 'none'}}>
-                            <Button variant={"contained"} className={classes.loginButton}>Login</Button>
-                        </NavLink>
+                        {props.nickname ?
+                            <NavLink to='/profile' style={{textDecoration: 'none'}}>
+                                {props.nickname}
+                            </NavLink>
+                            :
+                            <NavLink to='/login' style={{textDecoration: 'none'}}>
+                                <Button variant={"contained"} className={classes.loginButton}>Login</Button>
+                            </NavLink>
+                        }
                     </Grid>
                 </Paper>
             </Grid>
