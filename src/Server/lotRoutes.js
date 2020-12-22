@@ -90,7 +90,6 @@ router.post('/findall', async (req, res) => {
 })
 router.post('/find', async (req, res) => {
     try {
-        console.log(req.body.id)
         const lot = await Lot.findOne({_id: req.body.id});
         res.status(201).json({...lot})
 

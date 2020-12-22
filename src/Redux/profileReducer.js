@@ -21,7 +21,6 @@ const profileReducer = (state = initialState, action) => {
     }
 }
 
-
 export default profileReducer;
 
 export const setUser = (user) => {
